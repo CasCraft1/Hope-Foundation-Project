@@ -8,10 +8,10 @@ import streamlit as st
 #import and clean data
 
 def reviewclean(path: str):
-    reviewdata = pd.read_excel("C:/Econ 8320/my-python-project/UNO Service Learning Data Sheet De-Identified Version.xlsx")
+    reviewdata = pd.read_excel("UNO Service Learning Data Sheet De-Identified Version.xlsx")
     return(reviewdata)
 
-df = reviewclean("C:/Econ 8320/my-python-project/UNO Service Learning Data Sheet De-Identified Version.xlsx")
+df = reviewclean("")
 st.dataframe(df)
 #create dataframe with just "ready for review" data
 
