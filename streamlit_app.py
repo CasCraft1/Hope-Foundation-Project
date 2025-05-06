@@ -3,18 +3,155 @@ import pandas as pd
 import numpy as np
 import re
 import streamlit as st
+import os
+from pandas.api.types import (
+    is_categorical_dtype,
+    is_datetime64_any_dtype,
+    is_numeric_dtype,
+    is_object_dtype,
+)
 
 
+#use first csv file within the working directory
+cwd = os.getcwd()
+files = [file for file in os.listdir(cwd) if file.endswith('.csv')]
+path = files[0]
+data = pd.read_csv(files[0])
 
-#import and clean data
+#filter dataframe function from streamlit website
+def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adds a UI on top of a dataframe to let viewers filter columns
 
-def reviewclean(path: str):
-    reviewdata = pd.read_csv("data.csv")
-    return(reviewdata)
+    Args:
+        df (pd.DataFrame): Original dataframe
 
-df = reviewclean("")
-st.dataframe(df)
+    Returns:
+        pd.DataFrame: Filtered dataframe
+    """
+    modify = st.checkbox("Add filters",key = "NOT DEFAULT")
+
+    if not modify:
+        return df
+
+    df = df.copy()
+
+    # Try to convert datetimes into a standard format (datetime, no timezone)
+    for col in df.columns:
+        if is_object_dtype(df[col]):
+            try:
+                df[col] = pd.to_datetime(df[col])
+            except Exception:
+                pass
+
+        if is_datetime64_any_dtype(df[col]):
+            df[col] = df[col].dt.tz_localize(None)
+
+    modification_container = st.container()
+
+    with modification_container:
+        to_filter_columns = st.multiselect("Filter by", df.columns)
+        for column in to_filter_columns:
+            left, right = st.columns((1, 20))
+            # Treat columns with < 10 unique values as categorical
+            if is_categorical_dtype(df[column]) or df[column].nunique() < 10:
+                user_cat_input = right.multiselect(
+                    f"Values for {column}",
+                    df[column].unique(),
+                    default=list(df[column].unique()),
+                )
+                df = df[df[column].isin(user_cat_input)]
+            elif is_numeric_dtype(df[column]):
+                _min = float(df[column].min())
+                _max = float(df[column].max())
+                step = (_max - _min) / 100
+                user_num_input = right.slider(
+                    f"Values for {column}",
+                    min_value=_min,
+                    max_value=_max,
+                    value=(_min, _max),
+                    step=step,
+                )
+                df = df[df[column].between(*user_num_input)]
+            elif is_datetime64_any_dtype(df[column]):
+                user_date_input = right.date_input(
+                    f"Values for {column}",
+                    value=(
+                        df[column].min(),
+                        df[column].max(),
+                    ),
+                )
+                if len(user_date_input) == 2:
+                    user_date_input = tuple(map(pd.to_datetime, user_date_input))
+                    start_date, end_date = user_date_input
+                    df = df.loc[df[column].between(start_date, end_date)]
+            else:
+                user_text_input = right.text_input(
+                    f"Substring or regex in {column}",
+                )
+                if user_text_input:
+                    df = df[df[column].astype(str).str.contains(user_text_input)]
+
+    return df
+
+
+#import and clean data to see pending application characteristics
+def reviewclean(data):
+    df = data
+    dfslim = df.loc[:,['Patient ID#',"Grant Req Date","App Year",'Request Status','Application Signed?']]
+    dfslim = dfslim.loc[dfslim["Request Status"]=="Pending"]
+    #fill in missing values 
+    dfslim["Application Signed?"] = df["Application Signed?"].fillna("Not Specified")
+    return(dfslim)
+
+#call function for application related data
+applicationdata = reviewclean(data)
+
+#function to clean data for demographic review
+def democlean(data):
+    #filter dataframe by whether or not Amount is a dollar amount and a number
+    df = data
+    df = df.dropna(subset=[" Amount "])
+    df = df[df[" Amount "].str.contains(r"\d+",case = False, regex = True)]
+    df[" Amount "] = df[" Amount "].str.replace('[$,]', '',regex=True).astype(float)    
+    #load appropriate demographics
+    columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
+    "Gender":"Gender"}
+    columns = [columnmap[i] for i in columnmap]
+    columns.append(" Amount ")
+    output = df[columns]
+    return output
+
+#call democlean with specified demographics
+
+demodf = democlean(data)
+
+reviewapps, demodata, timdata, remainderdata, kpidata, = st.tabs(["Applicatiosns for Review",
+"Support by Demographics", "Time to Give Support", "Leftover Funds", "Key Metrics"])
+
 #create dataframe with just "ready for review" data
+with reviewapps:
+    st.dataframe(filter_dataframe(applicationdata.copy().reset_index(drop = True)))
+#create table that aggregates using sum based on filters
 
-reviewdata = df.loc[:,"Application Signed?"]
+with demodata:
+    #create filters
+    demographics = ["State","City","Race","Gender"]
+    boxes = list(map(lambda x: st.checkbox(x,key = x[-2:]),demographics))
+
+    selected = []
+    for i, j in enumerate(boxes):
+        if j:
+            selected.append((j,demographics[i]))
+    
+    appliedfilters = [i[1] for i in selected if i[0]==True]
+    #apply filters to dataframe
+    columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
+    "Gender":"Gender"}
+    columns = [columnmap[i] for i in appliedfilters]
+    newdf = demodf[columns]
+    newdf["Amount"] = demodf[" Amount "]     
+    st.dataframe(newdf.groupby(columns).sum())
+    
+ 
 
