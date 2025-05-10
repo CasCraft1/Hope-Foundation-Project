@@ -174,8 +174,8 @@ df["Type of Assistance (CLASS)"].unique()
 date = f'{datetime.date.today().month}-{datetime.date.today().year}'
 df.to_csv(f"{cwd}/Clean Data/cleandata{date}.csv")
 
-g = Github("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")
-repo = g.get_user().get_repo("https://github.com/CasCraft1/Hope-Foundation-Project")
+#g = Github("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")
+#repo = g.get_user().get_repo("github.com/CasCraft1/Hope-Foundation-Project")
 
-with open(f"{cwd}/Clean Data/cleandata{date}.csv","rb") as file:
-    repo.create_file(f"{cwd}/Clean Data/cleandata{date}.csv","Script Upload",file.read(), branch = "main")
+#with open(f"{cwd}/Clean Data/cleandata{date}.csv","rb") as file:
+#    repo.create_file(f"{cwd}/Clean Data/cleandata{date}.csv","Script Upload",file.read(), branch = "main")
