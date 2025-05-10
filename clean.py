@@ -5,8 +5,13 @@ import re
 from datetime import date
 import datetime
 import os
+import json
 
-filepath = os.environ.get('GITHUB_EVENT_PATH')
+eventpath = os.environ.get('GITHUB_EVENT_PATH')
+
+with open(eventpath,'r') as f:
+    eventdata = json.load(f)
+filepath = eventdata['commits'][0]['added'][0]
 
 if filepath.endswith('.csv'):
     df = pd.read_csv(filepath)
