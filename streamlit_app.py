@@ -15,7 +15,7 @@ from pandas.api.types import (
 
 #use first csv file within the working directory
 cwd = os.getcwd()
-files = [file for file in os.listdir(cwd) if file.endswith('.csv')]
+files = [file for file in os.listdir(f"{cwd}/Clean Data/") if file.endswith('.csv')]
 path = files[0]
 data = pd.read_csv(files[0])
 
