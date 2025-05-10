@@ -5,6 +5,9 @@ on:
     paths:
       - 'Upload Here/**'
 
+permissions:
+  contents: write
+  
 jobs:
   clean_data:
     runs-on: ubuntu-latest
