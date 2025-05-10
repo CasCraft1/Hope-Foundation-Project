@@ -21,5 +21,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt  
 
-      - name: Run clean script
-        run: python clean.py
+      - name: Get the latest uploaded file
+        id: get-file
+        run: echo "FILE_NAME=$(git diff --name-only HEAD^ HEAD | grep -E '\.csv|\.xlsx')" >> $GITHUB_ENV
+
+      - name: Run cleaning script
+        run: python clean.py $FILE_NAME
+
+
