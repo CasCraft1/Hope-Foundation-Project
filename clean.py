@@ -170,6 +170,7 @@ df["Type of Assistance (CLASS)"].unique()
 
 
 #Export
+
 date = f'{datetime.date.today().month}-{datetime.date.today().year}'
 df.to_csv(f"Clean Data/cleandata{date}.csv")
-
+os.environ["filepath"] = f"Clean Data/cleandata{date}.csv"

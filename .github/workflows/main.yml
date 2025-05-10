@@ -23,5 +23,9 @@ jobs:
       - name: Run cleaning script
         run: python clean.py
 
-
+      - name: Upload generated file
+            uses: actions/upload-artifact@v2
+            with:
+              name: generated-file
+              path: $filepath
 
