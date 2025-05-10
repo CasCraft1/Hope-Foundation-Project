@@ -4,9 +4,14 @@ import numpy as np
 import re
 from datetime import date
 import datetime
+import os
 
-filepath = "c:/Users/mackm/Downloads/UNO Service Learning Data Sheet De-Identified Version (1).xlsx"
-df = pd.read_excel(filepath)
+filepath = os.environ.get('GITHUB_EVENT_PATH')
+
+if filepath.endswith('.csv'):
+    df = pd.read_csv(filepath)
+elif filepath.endswith('.xlsx'):
+    df = pd.read_excel(filepath)
 
 
 #standardize race values
@@ -161,5 +166,5 @@ df["Type of Assistance (CLASS)"].unique()
 
 
 #Export
-df.to_csv("aacurrentdata.csv")
+df.to_csv(f"cleandata{datetime.now().date()}.csv")
 
