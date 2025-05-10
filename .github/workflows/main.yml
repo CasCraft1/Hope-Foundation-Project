@@ -23,19 +23,19 @@ jobs:
       - name: Run cleaning script
         run: python clean.py
 
-  Upload_File:
-      needs: clean_data
-      runs-on: ubuntu-latest
-      steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: configure
-        uses: actions/configure-pages@v4
+#  Upload_File:
+#      needs: clean_data
+#      runs-on: ubuntu-latest
+#      steps:
+#      - name: Checkout
+#        uses: actions/checkout@v4
+#      - name: configure
+#        uses: actions/configure-pages@v4
 
 
-      - name: Upload generated file
-        uses: actions/upload-pages-artifact@v3
-        with:
-            name: generated-file
-            path: $filepath
+#      - name: Upload generated file
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#            name: generated-file
+#            path: $filepath
 
