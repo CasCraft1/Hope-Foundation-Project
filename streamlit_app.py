@@ -17,15 +17,14 @@ from pandas.api.types import (
 cwd = os.getcwd()
 files = [file for file in os.listdir(f"{cwd}/Clean Data/") if file.endswith('.csv')]
 path = files[0]
-f"{cwd}/Clean Data/{files[0]}"
-data = pd.read_csv("Clean Data/cleandata5-2025.csv")
+data = pd.read_csv(f"{cwd}/Clean Data/{files[0]}")
 
 #st.set_page_config(layout="wide")
 
 sidebar = st.sidebar
 with sidebar:
        selection =  st.radio(" Select File", files)
-       data = pd.read_csv(selection)
+       data = pd.read_csv(f"{cwd}/Clean Data/{selection}")
 
 #filter dataframe function from streamlit website
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
