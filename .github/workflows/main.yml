@@ -24,10 +24,10 @@ jobs:
         run: python clean.py
       - name: check cwd
         run: |
-          ls
           git config --global user.name 'CasCraft1'
           git config --global user.email 'mackmack0075@gmail.com'
-          git commit -am "Automated report"
+          git add "Clean Data/cleandata5-2025.csv"
+          git commit -m "Automated report"
           git push
           
 
