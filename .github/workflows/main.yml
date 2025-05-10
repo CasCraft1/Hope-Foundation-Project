@@ -23,6 +23,10 @@ jobs:
       - name: Run cleaning script
         run: python clean.py
 
+  Upload_File:
+      needs: clean_data
+      runs-on: ubuntu-latest
+      steps:
       - name: Upload generated file
         uses: actions/upload-artifact@v2
         with:
