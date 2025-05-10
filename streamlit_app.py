@@ -4,6 +4,7 @@ import numpy as np
 import re
 import streamlit as st
 import os
+import plotly.express as pt
 from pandas.api.types import (
     is_categorical_dtype,
     is_datetime64_any_dtype,
@@ -17,6 +18,13 @@ cwd = os.getcwd()
 files = [file for file in os.listdir(cwd) if file.endswith('.csv')]
 path = files[0]
 data = pd.read_csv(files[0])
+
+#st.set_page_config(layout="wide")
+
+sidebar = st.sidebar
+with sidebar:
+       selection =  st.radio(" Select File", files)
+       data = pd.read_csv(selection)
 
 #filter dataframe function from streamlit website
 def filter_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -109,16 +117,17 @@ applicationdata = reviewclean(data)
 
 #function to clean data for demographic review
 def democlean(data):
+    
     #filter dataframe by whether or not Amount is a dollar amount and a number
     df = data
-    df = df.dropna(subset=[" Amount "])
-    df = df[df[" Amount "].str.contains(r"\d+",case = False, regex = True)]
-    df[" Amount "] = df[" Amount "].str.replace('[$,]', '',regex=True).astype(float)    
+    df = df.dropna(subset=["Amount"])
+    #df = df[df["Amount"].str.contains(r"\d+",case = False, regex = True)]
+    #df["Amount"] = df["Amount"].str.replace('[$,]', '',regex=True).astype(float)    
     #load appropriate demographics
     columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
     "Gender":"Gender"}
     columns = [columnmap[i] for i in columnmap]
-    columns.append(" Amount ")
+    columns.append("Amount")
     output = df[columns]
     return output
 
@@ -126,7 +135,45 @@ def democlean(data):
 
 demodf = democlean(data)
 
-reviewapps, demodata, timdata, remainderdata, kpidata, = st.tabs(["Applicatiosns for Review",
+def timeclean(data):
+    metrics = data[['Patient ID#',"Year",'Grant Req Date','Payment Submitted?','Time']]
+    finalmetrics = metrics[["Year", "Time"]]
+    mean = finalmetrics.groupby("Year").mean()
+    std = finalmetrics.groupby("Year").std()
+    min = finalmetrics.groupby("Year").min()
+    max = finalmetrics.groupby("Year").max()
+    stats = [mean,std,min,max]
+    finalstats = mean
+    finalstats["Std"] = std.iloc[:,0]
+    finalstats["Min"] = min.iloc[:,0]
+    finalstats["Max"] = max.iloc[:,0]
+    finalstats = finalstats.rename(columns={"Time":"Mean"})
+    return [finalstats,finalmetrics]
+timeoutput = timeclean(data)
+timemetrics = timeoutput[0].fillna(0)
+timedata = timeoutput[1]
+
+def remfunds(data):
+    columns = ["App Year",'Type of Assistance (CLASS)',"counter","Remaining Balance"]
+    count = data.loc[:,columns]
+    count["Remaining Balance"] = count["Remaining Balance"].apply(lambda x: np.nan if type(x) is str else x)
+    count = count[count["Remaining Balance"]>0]
+    output = count#.groupby(["App Year",'Type of Assistance (CLASS)']).sum()
+      
+    return output
+
+remfundata = remfunds(data)
+
+def kmetric(data):
+    columns = ["Year","Patient ID#","Request Status",'Type of Assistance (CLASS)',"counter", "Amount"]
+    df = data.loc[:,columns]
+    df = df[df["Request Status"]!= "Denied"]
+    df["Year"] = df["Year"]
+    return df
+metricdata = kmetric(data)
+
+
+reviewapps, demodata, timdata, remainderdata, kpidata, = st.tabs(["Applications for Review",
 "Support by Demographics", "Time to Give Support", "Leftover Funds", "Key Metrics"])
 
 #create dataframe with just "ready for review" data
@@ -136,22 +183,63 @@ with reviewapps:
 
 with demodata:
     #create filters
+    democol = st.columns([.3,.7])
     demographics = ["State","City","Race","Gender"]
-    boxes = list(map(lambda x: st.checkbox(x,key = x[-2:]),demographics))
+    with democol[0]:
+        boxes = list(map(lambda x: st.checkbox(x,key = x[-2:]),demographics))
 
-    selected = []
-    for i, j in enumerate(boxes):
-        if j:
-            selected.append((j,demographics[i]))
+        selected = []
+        for i, j in enumerate(boxes):
+            if j:
+                selected.append((j,demographics[i]))
+        
+        appliedfilters = [i[1] for i in selected if i[0]==True]
+        #apply filters to dataframe
+        columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
+        "Gender":"Gender"}
+        columns = [columnmap[i] for i in appliedfilters]
+        newdf = demodf[columns]
+        newdf["Amount"] = demodf["Amount"]
+        with democol[1]:
+            if len(selected) >0:     
+                st.dataframe(newdf.groupby(columns).sum())
+            else:
+                ""
+
+with timdata:
+    st.dataframe(timemetrics)
+    yeardata = timedata
+    years = yeardata["Year"].unique()
+    plotdata = yeardata[yeardata["Year"]==years[-1]]
+    timefig = pt.box(plotdata, y="Time")
+    st.plotly_chart(timefig)
+
+with remainderdata:
+
+    st.dataframe(remfundata.groupby(["App Year",'Type of Assistance (CLASS)']).sum())
+    avgtype = ["App Year",'Type of Assistance (CLASS)',"Remaining Balance"]
+    remfundata2 = remfundata.loc[:,["App Year",'Type of Assistance (CLASS)',"Remaining Balance"]]
+    st.dataframe(remfundata2.groupby(["App Year",'Type of Assistance (CLASS)']).mean())
     
-    appliedfilters = [i[1] for i in selected if i[0]==True]
-    #apply filters to dataframe
-    columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
-    "Gender":"Gender"}
-    columns = [columnmap[i] for i in appliedfilters]
-    newdf = demodf[columns]
-    newdf["Amount"] = demodf[" Amount "]     
-    st.dataframe(newdf.groupby(columns).sum())
-    
- 
+with kpidata:
+    container1 = st.container()
+    container2 = st.container()
+    total = metricdata.loc[:,["Year","Amount"]]
+    count = metricdata.loc[:,["Patient ID#","Year","counter"]]
+    count = count.groupby(["Year"]).count()
+    total = total.groupby("Year").sum()
+    with container1:
+        kpicolumns1 = st.columns(2)
+        with kpicolumns1[0]:
+            fig = pt.line(total,x = total.index, y = "Amount")
+            st.plotly_chart(fig )
+        with kpicolumns1[1]:
+            st.dataframe(total)
+    with container2:
+        kpicolumns2 = st.columns(2)
+        with kpicolumns2[0]:
+            fig2 = pt.line(count,x= count.index,y = "counter")
+            st.plotly_chart(fig2)
+        with kpicolumns2[1]:
+            st.dataframe(count)
 
