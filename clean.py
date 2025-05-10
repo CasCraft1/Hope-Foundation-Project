@@ -6,17 +6,24 @@ from datetime import date
 import datetime
 import os
 import json
+import sys
 
-eventpath = os.environ.get('GITHUB_EVENT_PATH')
 
-with open(eventpath,'r') as f:
-    eventdata = json.load(f)
-filepath = eventdata['commits'][0]['added'][0]
+# Get the filename from the workflow
+filename = sys.argv[1]  # Get the first argument
 
-if filepath.endswith('.csv'):
-    df = pd.read_csv(filepath)
-elif filepath.endswith('.xlsx'):
-    df = pd.read_excel(filepath)
+if not filename:
+    print("No file provided. Exiting.")
+    sys.exit(1)
+
+# Load the file
+if filename.endswith(".csv"):
+    df = pd.read_csv(filename)
+elif filename.endswith(".xlsx"):
+    df = pd.read_excel(filename)
+else:
+    print("Unsupported file format.")
+    sys.exit(1)
 
 
 #standardize race values
