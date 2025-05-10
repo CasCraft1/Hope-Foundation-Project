@@ -10,7 +10,7 @@ import sys
 
 
 # Get the filename from the workflow
-filename = os.getenv("FILE_NAME","")  # Get the first argument
+filename = os.getenv("FILE_NAME")  # Get the first argument
 
 if not filename:
     print("No file provided. Exiting.")
