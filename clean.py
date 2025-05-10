@@ -22,7 +22,7 @@ if filename.endswith(".csv"):
 elif filename.endswith(".xlsx"):
     df = pd.read_excel(filename)
 else:
-    print("Unsupported file format.")
+    print(f'{filename}')
     sys.exit(1)
 
 
