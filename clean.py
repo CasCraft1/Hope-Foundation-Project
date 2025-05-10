@@ -10,20 +10,12 @@ import sys
 
 
 # Get the filename from the workflow
-filename = sys.argv[1] # Get the first argument
 
-if not filename:
-    print("No file provided. Exiting.")
-    sys.exit(1)
-
-# Load the file
-if filename.endswith(".csv"):
-    df = pd.read_csv(filename)
-elif filename.endswith(".xlsx"):
-    df = pd.read_excel(filename)
-else:
-    print(f'{filename}')
-    sys.exit(1)
+cwd = os.getcwd()
+directory = f"{cwd}/Upload Here"
+files = [file for file in os.listdir(directory) if file.endswith('.xlsx')]
+path = files[0]
+df = pd.read_excel(f"{directory}/{path}")
 
 
 #standardize race values

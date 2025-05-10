@@ -3,8 +3,7 @@ name: Clean Data
 on:
   push:
     paths:
-      - '**.csv'
-      - '**.xlsx'
+      - 'Upload Here/**'
 
 jobs:
   clean_data:
@@ -21,14 +20,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt  
 
-      - name: Get changed files
-        id: changed_files
-        run: |
-          echo "::set-output name=added_files::$(echo '${{ toJSON(github.event.commits.*.added) }}' | jq -r '.[][]')"
-          echo "::set-output name=modified_files::$(echo '${{ toJSON(github.event.commits.*.modified) }}' | jq -r '.[][]')"
-
       - name: Run cleaning script
-        run: python clean.py ${{ steps.changed_files.outputs.added_files }}
+        run: python clean.py
 
 
 
