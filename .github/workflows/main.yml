@@ -1,17 +1,14 @@
-name: Run clean.py
+name: Clean Data
 
 on:
   push:
-    branches:
-      - main  # Trigger on pushes to the main branch with files that end in .csv or .xlsx
     paths:
-      - '**/*.xlsx'
-      - '**/*.csv'
+      - '**.csv'
+      - '**.xlsx'
 
 jobs:
-  run-script:
+  clean_data:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,5 +18,8 @@ jobs:
         with:
           python-version: '3.13' 
 
-      - name: Run clean.py
+      - name: Install dependencies
+        run: pip install -r requirements.txt  
+
+      - name: Run clean script
         run: python clean.py
