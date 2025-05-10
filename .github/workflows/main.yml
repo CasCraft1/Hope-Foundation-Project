@@ -26,6 +26,8 @@ jobs:
         run: echo "FILE_NAME=$(git diff --name-only HEAD^ HEAD | grep -E '\.csv|\.xlsx')" >> $GITHUB_ENV
 
       - name: Run cleaning script
-        run: python clean.py $FILE_NAME
+        run: python clean.py
+        env:
+         FILE_NAME: ${{ env.FILE_NAME }}
 
 
