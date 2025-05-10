@@ -23,11 +23,7 @@ jobs:
       - name: Run cleaning script
         run: python clean.py
 
-      - name: Upload generated file
-        uses: actions/upload-artifact@v4
-        with:
-            name: generated-file
-            path: "Clean Data/output.csv"
+
 
 
  # Upload_File:
