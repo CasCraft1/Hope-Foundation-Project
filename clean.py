@@ -10,7 +10,7 @@ import sys
 
 
 # Get the filename from the workflow
-filename = sys.argv[1]  # Get the first argument
+filename = sys.argv[0]  # Get the first argument
 
 if not filename:
     print("No file provided. Exiting.")
