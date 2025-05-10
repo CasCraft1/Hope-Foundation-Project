@@ -18,7 +18,7 @@ cwd = os.getcwd()
 files = [file for file in os.listdir(f"{cwd}/Clean Data/") if file.endswith('.csv')]
 path = files[0]
 f"{cwd}/Clean Data/{files[0]}"
-data = pd.read_csv(f"{cwd}/Clean Data/{files[0]}")
+data = pd.read_csv(f"Clean Data/{files[0]}")
 
 #st.set_page_config(layout="wide")
 
