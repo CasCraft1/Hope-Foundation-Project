@@ -121,11 +121,12 @@ def democlean(data):
     #filter dataframe by whether or not Amount is a dollar amount and a number
     df = data
     df = df.dropna(subset=["Amount"])
+    df = df[df["Request Status"] == "Approved"]
     #df = df[df["Amount"].str.contains(r"\d+",case = False, regex = True)]
     #df["Amount"] = df["Amount"].str.replace('[$,]', '',regex=True).astype(float)    
     #load appropriate demographics
     columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
-    "Gender":"Gender"}
+    "Gender":"Gender","Age":"Age","Marital Status":"Marital Status","Insurance Type":"Insurance Type","Household Size":"Household Size","Monthly Household Income":"Monthly Household Income"}
     columns = [columnmap[i] for i in columnmap]
     columns.append("Amount")
     output = df[columns]
@@ -174,17 +175,18 @@ metricdata = kmetric(data)
 
 
 reviewapps, demodata, timdata, remainderdata, kpidata, = st.tabs(["Applications for Review",
-"Support by Demographics", "Time to Give Support", "Leftover Funds", "Key Metrics"])
+"Support by Demographics", "Assistance Process Time", "Leftover Funds", "Key Metrics"])
 
 #create dataframe with just "ready for review" data
 with reviewapps:
+    st.text("Pending Requests")
     st.dataframe(filter_dataframe(applicationdata.copy().reset_index(drop = True)))
 #create table that aggregates using sum based on filters
 
 with demodata:
     #create filters
     democol = st.columns([.3,.7])
-    demographics = ["State","City","Race","Gender"]
+    demographics = ["State","City","Race","Gender","Age", "Marital Status","Insurance Type","Household Size","Monthly Household Income"]
     with democol[0]:
         boxes = list(map(lambda x: st.checkbox(x,key = x[-2:]),demographics))
 
@@ -196,7 +198,7 @@ with demodata:
         appliedfilters = [i[1] for i in selected if i[0]==True]
         #apply filters to dataframe
         columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
-        "Gender":"Gender"}
+    "Gender":"Gender","Age":"Age","Marital Status":"Marital Status","Insurance Type":"Insurance Type","Household Size":"Household Size","Monthly Household Income":"Monthly Household Income"}
         columns = [columnmap[i] for i in appliedfilters]
         newdf = demodf[columns]
         newdf["Amount"] = demodf["Amount"]
@@ -205,8 +207,17 @@ with demodata:
                 st.dataframe(newdf.groupby(columns).sum())
             else:
                 ""
+        chartdf = newdf
+        if "Household Size" in chartdf.columns:
+            chartdf["Household Size"] = chartdf["Household Size"].astype(str)
+        if "Age" in chartdf.columns:
+            chartdf["Age"] = chartdf["Age"].astype(str)
+
+        with st.container( ):
+            st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount'),)
 
 with timdata:
+    st.text("Assistance Process Time Stats")
     st.dataframe(timemetrics)
     yeardata = timedata
     years = yeardata["Year"].unique()
@@ -215,10 +226,11 @@ with timdata:
     st.plotly_chart(timefig)
 
 with remainderdata:
-
+    st.text("Total Assistance by Assistance Type")
     st.dataframe(remfundata.groupby(["App Year",'Type of Assistance (CLASS)']).sum())
     avgtype = ["App Year",'Type of Assistance (CLASS)',"Remaining Balance"]
     remfundata2 = remfundata.loc[:,["App Year",'Type of Assistance (CLASS)',"Remaining Balance"]]
+    st.text("Average Assistance by Type")
     st.dataframe(remfundata2.groupby(["App Year",'Type of Assistance (CLASS)']).mean())
     
 with kpidata:

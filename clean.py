@@ -24,7 +24,9 @@ possibler = ["Missing","African American","White","American Indian or Alaska Nat
 df['Race'] = df['Race'].astype(str)
 
 df['Race'] = df['Race'].apply(lambda x: difflib.get_close_matches(x, possibler, n=1)[0] if difflib.get_close_matches(x, possibler, n=1) else x)
-df['Race'].unique()
+df["Race"] = df["Race"].astype(str)
+df['Race'] = df['Race'].apply(lambda x: "Missing" if x == "nan"  else x)
+df["Race"] = df["Race"].astype(str)
 
 #standardize state names
 # Define the dictionary
@@ -91,7 +93,7 @@ df['Pt State'] = df['Pt State'].apply(lambda x: x.upper())
 df["Pt City"] = df['Pt City'].apply(lambda x: x.capitalize() if type(x) == str else x)
 df["Pt City"] = df['Pt City'].apply(lambda x: re.sub(r"[^a-zA-Z0-9\s]","",x) if type(x) == str else x)
 df['Pt City'] = df['Pt City'].apply(lambda x: x.rstrip(" ") if type(x) == str else x)
-
+df['Pt City'] = df['Pt City'].apply(lambda x: "Missing" if type(x) is float else x)
 
 #standardize date time 
 df['Payment Submitted?'] = df['Payment Submitted?'].apply(lambda x: x if type(x) is datetime.datetime else np.nan)
@@ -107,7 +109,7 @@ df["Gender"] = df["Gender"].apply(lambda x: x if type(x) is str else "Missing")
 #df['Gender'].apply(lambda x:"Missing" if type(x) is float else x)
 df['Gender'] = df["Gender"].apply(lambda x: "Male" if type(re.match(r"(.+)?\s*\bmale\b\s*",x,re.IGNORECASE)) is re.Match else x)
 df['Gender'] = df["Gender"].apply(lambda x: "Female" if type(re.match(r"(.+)?\s*female\s*(.+)?",x,re.IGNORECASE)) is re.Match  else x)
-df['Gender'].unique()
+
 df['counter'] = 1
 
 
@@ -167,10 +169,28 @@ df["Type of Assistance (CLASS)"] = df["Type of Assistance (CLASS)"].apply(lambda
 
 df["Type of Assistance (CLASS)"].unique()
 
+#create household income variable
+df["Monthly Household Income"] = df["Total Household Gross Monthly Income"]
+df["Monthly Household Income"] = df["Monthly Household Income"].apply(lambda x: x if type(re.match(r"\d",str(x))) is re.Match else np.nan)
+for i, j in enumerate(df["Monthly Household Income"]):
+    print(j)
+    if 2000 > j > 0:
+        df.loc[i,"Monthly Household Income"] = "0-2000"
+    elif 4000 > j > 2001:
+        df.loc[i,"Monthly Household Income"] = "2001-4000"
+    elif 6000 > j > 4001:
+        df.loc[i,"Monthly Household Income"] = "4001-6000"
+    elif 8000 > j >6001:
+        df.loc[i,"Monthly Household Income"] = "6001-8000"  
+    elif 10000 > j >8001:
+        df.loc[i,"Monthly Household Income"] = "8001-10000"     
+    elif j > 10000:
+         df.loc[i,"Monthly Household Income"] = "10000+"  
+    else:
+        df.loc[i,"Monthly Household Income"] = "Missing"  
 
 
 #Export
-
 date = f'{datetime.date.today().month}-{datetime.date.today().year}'
 df.to_csv(f"{cwd}/Clean Data/cleandata{date}.csv")
 
