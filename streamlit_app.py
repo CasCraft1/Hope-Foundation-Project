@@ -214,7 +214,8 @@ with demodata:
             chartdf["Age"] = chartdf["Age"].astype(str)
 
         with st.container( ):
-            st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount'),)
+            if len(selected)>0:
+                st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount'),)
 
 with timdata:
     st.text("Assistance Process Time Stats")
