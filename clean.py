@@ -192,6 +192,7 @@ for i, j in enumerate(df["Monthly Household Income"]):
 
 #Export
 date = f'{datetime.date.today().month}-{datetime.date.today().year}'
-df.to_csv(f"{cwd}/Clean Data/cleandata{date}.csv")
+df.to_csv(f"{cwd}/Clean Data/cleandata{date}2.csv")
+date
 
-
+datetime.date.today()
