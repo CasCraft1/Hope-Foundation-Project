@@ -229,7 +229,7 @@ with timdata:
     #render chart based on most recent year
     plotdata = yeardata[yeardata["Year"]==years[-1]]
     timefig = pt.box(plotdata, y="Time")
-    st.text(f"Process Time Distribution for {years[-1]}")
+    st.text(f"Process Time Distribution for {str(years[-1])}")
     st.plotly_chart(timefig)
 
 with remainderdata:
