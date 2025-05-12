@@ -21,6 +21,7 @@ data = pd.read_csv(f"{cwd}/Clean Data/{files[0]}")
 
 #st.set_page_config(layout="wide")
 
+#side bar that reads in different sheets
 sidebar = st.sidebar
 with sidebar:
        selection =  st.radio(" Select File", files)
@@ -118,7 +119,7 @@ applicationdata = reviewclean(data)
 #function to clean data for demographic review
 def democlean(data):
     
-    #filter dataframe by whether or not Amount is a dollar amount and a number
+    
     df = data
     df = df.dropna(subset=["Amount"])
     df = df[df["Request Status"] == "Approved"]
@@ -222,7 +223,7 @@ with demodata:
                 st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount'),)
 
 with timdata:
-    st.text("Assistance Process Time Stats")
+    st.text("Assistance Process Time Stats in Days")
     st.dataframe(timemetrics)
     yeardata = timedata
     years = yeardata["Year"].unique()
