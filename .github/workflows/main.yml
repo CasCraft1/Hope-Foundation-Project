@@ -29,7 +29,7 @@ jobs:
         run: |
           git config --global user.name 'CasCraft1'
           git config --global user.email 'mackmack0075@gmail.com'
-          git add "Clean Data/cleandata5-2025.csv"
+          git add "Clean Data/"
           git commit -m "Automated report"
           git push
           
