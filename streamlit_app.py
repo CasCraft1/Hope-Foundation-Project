@@ -122,9 +122,6 @@ def democlean(data):
     df = data
     df = df.dropna(subset=["Amount"])
     df = df[df["Request Status"] == "Approved"]
-    #df = df[df["Amount"].str.contains(r"\d+",case = False, regex = True)]
-    #df["Amount"] = df["Amount"].str.replace('[$,]', '',regex=True).astype(float)    
-    #load appropriate demographics
     columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
     "Gender":"Gender","Age":"Age","Marital Status":"Marital Status","Insurance Type":"Insurance Type","Household Size":"Household Size","Monthly Household Income":"Monthly Household Income"}
     columns = [columnmap[i] for i in columnmap]
@@ -136,6 +133,7 @@ def democlean(data):
 
 demodf = democlean(data)
 
+#function to subset data for the time related outputs
 def timeclean(data):
     metrics = data[['Patient ID#',"Year",'Grant Req Date','Payment Submitted?','Time']]
     finalmetrics = metrics[["Year", "Time"]]
@@ -150,10 +148,11 @@ def timeclean(data):
     finalstats["Max"] = max.iloc[:,0]
     finalstats = finalstats.rename(columns={"Time":"Mean"})
     return [finalstats,finalmetrics]
+#call function
 timeoutput = timeclean(data)
 timemetrics = timeoutput[0].fillna(0)
 timedata = timeoutput[1]
-
+#function to subset data for remainder funds related outputs
 def remfunds(data):
     columns = ["App Year",'Type of Assistance (CLASS)',"counter","Remaining Balance"]
     count = data.loc[:,columns]
@@ -162,18 +161,20 @@ def remfunds(data):
     output = count#.groupby(["App Year",'Type of Assistance (CLASS)']).sum()
       
     return output
-
+#call function
 remfundata = remfunds(data)
-
+#function to subset data for metrics related outputs
 def kmetric(data):
     columns = ["Year","Patient ID#","Request Status",'Type of Assistance (CLASS)',"counter", "Amount"]
     df = data.loc[:,columns]
     df = df[df["Request Status"]!= "Denied"]
     df["Year"] = df["Year"]
     return df
+
+#call function
 metricdata = kmetric(data)
 
-
+#create tabs
 reviewapps, demodata, timdata, remainderdata, kpidata, = st.tabs(["Applications for Review",
 "Support by Demographics", "Assistance Process Time", "Leftover Funds", "Key Metrics"])
 
@@ -181,12 +182,14 @@ reviewapps, demodata, timdata, remainderdata, kpidata, = st.tabs(["Applications 
 with reviewapps:
     st.text("Pending Requests")
     st.dataframe(filter_dataframe(applicationdata.copy().reset_index(drop = True)))
-#create table that aggregates using sum based on filters
 
+
+#create table that aggregates using sum based on demographic filters
 with demodata:
     #create filters
     democol = st.columns([.3,.7])
     demographics = ["State","City","Race","Gender","Age", "Marital Status","Insurance Type","Household Size","Monthly Household Income"]
+    #create buttons
     with democol[0]:
         boxes = list(map(lambda x: st.checkbox(x,key = x[-2:]),demographics))
 
@@ -207,12 +210,13 @@ with demodata:
                 st.dataframe(newdf.groupby(columns).sum())
             else:
                 ""
+        #chart related data clean and rendering
         chartdf = newdf
         if "Household Size" in chartdf.columns:
             chartdf["Household Size"] = chartdf["Household Size"].astype(str)
         if "Age" in chartdf.columns:
             chartdf["Age"] = chartdf["Age"].astype(str)
-
+        #render chart
         with st.container( ):
             if len(selected)>0:
                 st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount'),)
@@ -222,8 +226,10 @@ with timdata:
     st.dataframe(timemetrics)
     yeardata = timedata
     years = yeardata["Year"].unique()
+    #render chart based on most recent year
     plotdata = yeardata[yeardata["Year"]==years[-1]]
     timefig = pt.box(plotdata, y="Time")
+    st.text(f"Process Time Distribution for {years[-1]}")
     st.plotly_chart(timefig)
 
 with remainderdata:
