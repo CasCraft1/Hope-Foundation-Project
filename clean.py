@@ -102,7 +102,7 @@ df["Grant Req Date"] = df['Grant Req Date'].apply(lambda x: x if type(x) is pd._
 df["Time"] = df["Payment Submitted?"] - df["Grant Req Date"]
 df["Time"] = df["Time"].apply(lambda x: x.days)
 df["Year"] = df["Payment Submitted?"].apply(lambda x: x.year if type(x) is pd._libs.tslibs.timestamps.Timestamp else np.nan)
-df["Year"].unique()
+
 
 #standardize gender
 df["Gender"] = df["Gender"].apply(lambda x: x if type(x) is str else "Missing")
@@ -194,8 +194,4 @@ for i, j in enumerate(df["Monthly Household Income"]):
 date = f'{datetime.date.today().month}-{datetime.date.today().year}'
 df.to_csv(f"{cwd}/Clean Data/cleandata{date}.csv")
 
-#g = Github("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")
-#repo = g.get_user().get_repo("github.com/CasCraft1/Hope-Foundation-Project")
 
-#with open(f"{cwd}/Clean Data/cleandata{date}.csv","rb") as file:
-#    repo.create_file(f"{cwd}/Clean Data/cleandata{date}.csv","Script Upload",file.read(), branch = "main")
