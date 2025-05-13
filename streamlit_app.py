@@ -112,6 +112,7 @@ def reviewclean(data):
     dfslim = dfslim.loc[dfslim["Request Status"]=="Pending"]
     #fill in missing values 
     dfslim["Application Signed?"] = df["Application Signed?"].fillna("Not Specified")
+    dfslim["Patient ID#"] = dfslim["Patient ID#"].astype(str)
     return(dfslim)
 
 #call function for application related data
