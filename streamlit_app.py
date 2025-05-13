@@ -13,13 +13,14 @@ from pandas.api.types import (
 )
 
 
+
 #use first csv file within the working directory
 cwd = os.getcwd()
 files = [file for file in os.listdir(f"{cwd}/Clean Data/") if file.endswith('.csv')]
 path = files[0]
 data = pd.read_csv(f"{cwd}/Clean Data/{files[0]}")
 
-#st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
 #side bar that reads in different sheets
 sidebar = st.sidebar
@@ -121,12 +122,12 @@ def democlean(data):
     
     
     df = data
-    df = df.dropna(subset=["Amount"])
+    df = df.dropna(subset=["Amount ($)"])
     df = df[df["Request Status"] == "Approved"]
-    columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
+    columnmap = {"State":"State", "City":"City","Race":"Race",
     "Gender":"Gender","Age":"Age","Marital Status":"Marital Status","Insurance Type":"Insurance Type","Household Size":"Household Size","Monthly Household Income":"Monthly Household Income"}
     columns = [columnmap[i] for i in columnmap]
-    columns.append("Amount")
+    columns.append("Amount ($)")
     output = df[columns]
     return output
 
@@ -144,31 +145,34 @@ def timeclean(data):
     max = finalmetrics.groupby("Year").max()
     stats = [mean,std,min,max]
     finalstats = mean
-    finalstats["Std"] = std.iloc[:,0]
+    finalstats["Std. Dev"] = std.iloc[:,0]
     finalstats["Min"] = min.iloc[:,0]
     finalstats["Max"] = max.iloc[:,0]
     finalstats = finalstats.rename(columns={"Time":"Mean"})
     return [finalstats,finalmetrics]
-#call function
+#call function and small adjustments
 timeoutput = timeclean(data)
 timemetrics = timeoutput[0].fillna(0)
+timemetrics = timemetrics[timemetrics["Mean"]>0]
 timedata = timeoutput[1]
 #function to subset data for remainder funds related outputs
 def remfunds(data):
-    columns = ["App Year",'Type of Assistance (CLASS)',"counter","Remaining Balance"]
+    columns = ["App Year",'Type of Assistance',"Count","Remaining Balance ($)","Request Status"]
     count = data.loc[:,columns]
-    count["Remaining Balance"] = count["Remaining Balance"].apply(lambda x: np.nan if type(x) is str else x)
-    count = count[count["Remaining Balance"]>0]
-    output = count#.groupby(["App Year",'Type of Assistance (CLASS)']).sum()
+    count["Remaining Balance ($)"] = count["Remaining Balance ($)"].apply(lambda x: np.nan if type(x) is str else x)
+    count = count[count["Remaining Balance ($)"]>0]
+    count = count[count["Request Status"] == "Approved"]
+    count = count.drop("Request Status", axis = 1)
+    output = count#.groupby(["App Year",'Type of Assistance']).sum()
       
     return output
 #call function
 remfundata = remfunds(data)
 #function to subset data for metrics related outputs
 def kmetric(data):
-    columns = ["Year","Patient ID#","Request Status",'Type of Assistance (CLASS)',"counter", "Amount"]
+    columns = ["Year","Patient ID#","Request Status",'Type of Assistance',"Count", "Amount ($)"]
     df = data.loc[:,columns]
-    df = df[df["Request Status"]!= "Denied"]
+    df = df[df["Request Status"]== "Approved"]
     df["Year"] = df["Year"]
     return df
 
@@ -201,11 +205,11 @@ with demodata:
         
         appliedfilters = [i[1] for i in selected if i[0]==True]
         #apply filters to dataframe
-        columnmap = {"State":"Pt State", "City":"Pt City","Race":"Race",
+        columnmap = {"State":"State", "City":"City","Race":"Race",
     "Gender":"Gender","Age":"Age","Marital Status":"Marital Status","Insurance Type":"Insurance Type","Household Size":"Household Size","Monthly Household Income":"Monthly Household Income"}
         columns = [columnmap[i] for i in appliedfilters]
         newdf = demodf[columns]
-        newdf["Amount"] = demodf["Amount"]
+        newdf["Amount ($)"] = demodf["Amount ($)"]
         with democol[1]:
             if len(selected) >0:     
                 st.dataframe(newdf.groupby(columns).sum())
@@ -220,7 +224,7 @@ with demodata:
         #render chart
         with st.container( ):
             if len(selected)>0:
-                st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount'),)
+                st.plotly_chart(pt.sunburst(chartdf,path = columns, values = 'Amount ($)'),)
 
 with timdata:
     st.text("Assistance Process Time Stats in Days")
@@ -235,31 +239,51 @@ with timdata:
 
 with remainderdata:
     st.text("Total Assistance by Assistance Type")
-    st.dataframe(remfundata.groupby(["App Year",'Type of Assistance (CLASS)']).sum())
-    avgtype = ["App Year",'Type of Assistance (CLASS)',"Remaining Balance"]
-    remfundata2 = remfundata.loc[:,["App Year",'Type of Assistance (CLASS)',"Remaining Balance"]]
-    st.text("Average Assistance by Type")
-    st.dataframe(remfundata2.groupby(["App Year",'Type of Assistance (CLASS)']).mean())
+    st.dataframe(remfundata.groupby(["App Year",'Type of Assistance']).sum())
+    st.plotly_chart(pt.bar(remfundata, x="Type of Assistance", y = "Remaining Balance ($)", title = "Total Remaining Funds by Assistance Type"))
+    avgtype = ["App Year",'Type of Assistance',"Remaining Balance ($)"]
+    remfundata2 = remfundata.loc[:,["App Year",'Type of Assistance',"Remaining Balance ($)"]]
+    st.text("Average Remaining Balance by Application Year  by Type")
+    st.dataframe(remfundata2.groupby(["App Year",'Type of Assistance']).mean())
+    remfundata2 = remfundata2.drop("App Year",axis = 1)
+    st.plotly_chart(pt.bar(remfundata2.groupby(['Type of Assistance'],as_index = False).mean(),x = "Type of Assistance",y = "Remaining Balance ($)", title = "Average Remaining Balance by Type"))
     
 with kpidata:
+    kpifilter = st.checkbox("By Assistance Type")
     container1 = st.container()
     container2 = st.container()
-    total = metricdata.loc[:,["Year","Amount"]]
-    count = metricdata.loc[:,["Patient ID#","Year","counter"]]
-    count = count.groupby(["Year"]).count()
-    total = total.groupby("Year").sum()
+    if kpifilter:
+        groupings = ["Year", "Type of Assistance"]
+        total = metricdata.loc[:,["Year","Type of Assistance","Amount ($)"]]
+        count = metricdata.loc[:,["Patient ID#","Type of Assistance","Year","Count"]]
+    else:
+        groupings = ["Year"]
+        total = metricdata.loc[:,["Year","Amount ($)"]]
+        count = metricdata.loc[:,["Patient ID#","Year","Count"]]       
+    count = count.drop_duplicates(subset = ["Patient ID#","Year"])
+    count = count.drop("Patient ID#", axis =1)
+    count = count.groupby(groupings, as_index = False).count()
+    total = total.groupby(groupings, as_index = False).sum()
     with container1:
         kpicolumns1 = st.columns(2)
         with kpicolumns1[0]:
-            fig = pt.line(total,x = total.index, y = "Amount")
-            st.plotly_chart(fig )
+            if kpifilter:
+                fig = pt.line(total,x = "Year", y = "Amount ($)", color = "Type of Assistance", title="Total Assistance by Year by Assistance Type")
+                st.plotly_chart(fig )
+            else:
+                fig = pt.line(total,x = "Year", y = "Amount ($)", title= "Total Assistance by Year")
+                st.plotly_chart(fig )               
         with kpicolumns1[1]:
             st.dataframe(total)
     with container2:
         kpicolumns2 = st.columns(2)
         with kpicolumns2[0]:
-            fig2 = pt.line(count,x= count.index,y = "counter")
-            st.plotly_chart(fig2)
+            if kpifilter:
+                fig2 = pt.line(count,x= "Year",y = "Count", color = "Type of Assistance", title="Individuals Helped by Year by Assistance Type")
+                st.plotly_chart(fig2)
+            else:
+                fig2 = pt.line(count,x= "Year",y = "Count",title="Individuals Helped by Year")
+                st.plotly_chart(fig2)               
         with kpicolumns2[1]:
             st.dataframe(count)
 

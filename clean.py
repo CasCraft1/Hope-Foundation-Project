@@ -101,7 +101,8 @@ df["Grant Req Date"] =  pd.to_datetime(df["Grant Req Date"])
 df["Grant Req Date"] = df['Grant Req Date'].apply(lambda x: x if type(x) is pd._libs.tslibs.timestamps.Timestamp else np.nan)
 df["Time"] = df["Payment Submitted?"] - df["Grant Req Date"]
 df["Time"] = df["Time"].apply(lambda x: x.days)
-df["Year"] = df["Payment Submitted?"].apply(lambda x: x.year if type(x) is pd._libs.tslibs.timestamps.Timestamp else np.nan)
+#use req date for year so more data is available for year
+df["Year"] = df["Grant Req Date"].apply(lambda x: x.year if type(x) is pd._libs.tslibs.timestamps.Timestamp else np.nan)
 
 
 #standardize gender
@@ -110,7 +111,7 @@ df["Gender"] = df["Gender"].apply(lambda x: x if type(x) is str else "Missing")
 df['Gender'] = df["Gender"].apply(lambda x: "Male" if type(re.match(r"(.+)?\s*\bmale\b\s*",x,re.IGNORECASE)) is re.Match else x)
 df['Gender'] = df["Gender"].apply(lambda x: "Female" if type(re.match(r"(.+)?\s*female\s*(.+)?",x,re.IGNORECASE)) is re.Match  else x)
 
-df['counter'] = 1
+df['Count'] = 1
 
 
 #Compute age
@@ -144,6 +145,7 @@ fixspelling = ["Uninsured"]
 df["Insurance Type"] = df['Insurance Type'].apply(lambda x: "Missing" if type(x) == float else x.capitalize())
 df['Insurance Type'] = df['Insurance Type'].apply(lambda x: difflib.get_close_matches(x, fixspelling, n=1)[0] if difflib.get_close_matches(x, fixspelling, n=1) else x)
 df['Insurance Type'] = df['Insurance Type'].apply(lambda x: "Medicare & medicaid" if x == "Medicaid & medicare" else x)
+df["Insurance Type"] = df["Insurance Type"].apply(lambda x: x.rstrip())
 
 #standardize marital status
 fixspelling = ["Separated"]
@@ -190,9 +192,10 @@ for i, j in enumerate(df["Monthly Household Income"]):
         df.loc[i,"Monthly Household Income"] = "Missing"  
 
 
+#rename columns to look better in app
+df = df.rename(columns = {"Type of Assistance (CLASS)":"Type of Assistance","Pt State":"State","Pt City":"City","Amount":"Amount ($)","Remaining Balance":"Remaining Balance ($)"})
+
 #Export
 date = f'{datetime.date.today().month}-{datetime.date.today().year}'
-df.to_csv(f"{cwd}/Clean Data/cleandata{date}2.csv")
-date
+df.to_csv(f"{cwd}/Clean Data/cleandata{date}.csv")
 
-datetime.date.today()
